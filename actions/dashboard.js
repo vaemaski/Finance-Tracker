@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/dist/types/server";
+import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 
 const serializeTransaction = (obj) =>{
@@ -17,6 +17,10 @@ export async function createAccount(data) {
         //find user from clerk
         const {userId} = await auth();
         if(!userId) throw new Error("Unauthorized");
+
+        // // Get request data for ArcJet
+        // const req = await request();
+
 
         //check if user exists inside the database
         const user = await db.user.findUnique({
@@ -60,7 +64,7 @@ export async function createAccount(data) {
         const serializedAccount = serializeTransaction(account);
 
 
-        revalidatePath("/dashboard")
+        revalidatePath("/dashboard");
         return { success : true , data : serializedAccount};
     } catch (error) {
         throw new Error(error.message)

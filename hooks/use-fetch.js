@@ -1,12 +1,10 @@
 import { toast } from "sonner";
+import { useState } from "react";
 
-const { setDate } = require("date-fns");
-const { useState } = require("react")
-
-const useFetch = (cb)=>{
-    const [data, setData] = useState(undefined);
-    const [loading, setLoading] = useState(undefined);
-    const [error, setError] = useState(undefined);
+const useFetch = (cb) => {
+  const [data, setData] = useState(undefined);
+  const [loading, setLoading] = useState(null);
+  const [error, setError] = useState(null);
 
     const fn = async (...agrs) => {
         setLoading(true);
@@ -22,9 +20,7 @@ const useFetch = (cb)=>{
         finally{
             setLoading(false)
         }
-
- 
-    }
-    return {data, setData, loading, error, fn };
+    };
+    return {data, loading, error, fn, setData };
 };
  export default useFetch;

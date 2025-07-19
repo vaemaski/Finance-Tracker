@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import { useEffect, useState} from 'react';
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from './ui/drawer';
 import { useForm } from 'react-hook-form';
 import {zodResolver} from "@hookform/resolvers/zod"
@@ -7,10 +7,11 @@ import { accountSchema } from '@/app/lib/schema';
 import { Input } from './ui/input';
 import { SelectContent, Select, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
-import { TextCursor } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import { Button } from './ui/button';
 import useFetch from '@/hooks/use-fetch';
 import { createAccount } from '@/actions/dashboard';
+import { toast } from 'sonner';
 const CreateAccountDrawer = ({children}) => {
   
   const [open, setOpen] = useState(false);
@@ -29,12 +30,37 @@ const CreateAccountDrawer = ({children}) => {
       isDefault : false,
     }
   })
-  
+ 
+
+  //USE FETCH
+  const {data: newAccount,
+    loading : createAccountLoading,
+     error,
+     fn : createAccountFn,
+     
+    } = useFetch(createAccount) ;
+
+     
   const onSubmit = async (data)=>{
      console.log(data);
-     
   }
-  useFetch(createAccount) 
+
+    //toast when account created
+    useEffect(()=>{
+      if(newAccount){
+        toast.success("Account successfully created");
+        reset();
+        setOpen(false);
+      }
+    }, [newAccount, reset]);
+
+    //toast when acc creation meets an error
+    useEffect(()=>{
+      if(error){
+        toast.error(error.message || "Failed to create account :/")
+      }
+    },[error]);
+
     return (
     <Drawer open = {open} onOpenChange = {setOpen}>
         <DrawerTrigger asChild>{children}</DrawerTrigger>
@@ -116,7 +142,19 @@ const CreateAccountDrawer = ({children}) => {
 
                   </DrawerClose>
 
-                  <Button type = "submit" className= "flex-1"> Create Acoount</Button>
+                  <Button type = "submit" 
+                  className= "flex-1"
+                  disabled = {createAccountLoading}
+                  >
+                    {createAccountLoading?(
+                      <>
+                      <Loader className='mr-2 h-3 w-3 animate-spin'> </Loader>
+                      Creating...
+                     </>
+                    ):(
+                      "Create Account"
+                    ) } 
+                    </Button>
                 </div>
 
               </form>
