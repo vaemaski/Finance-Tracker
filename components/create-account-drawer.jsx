@@ -42,7 +42,7 @@ const CreateAccountDrawer = ({children}) => {
 
      
   const onSubmit = async (data)=>{
-     console.log(data);
+    await createAccountFn(data);
   }
 
     //toast when account created
