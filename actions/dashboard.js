@@ -41,11 +41,11 @@ export async function createAccount(data) {
 
         //check if there are more accounts of the user
         const existingAccount = await db.account.findMany({
-            where : {userId : userId},
+            where : {userId : user.id},
         })
 
         //check for deafult
-        const shouldBeDefault = existingAccount.length===0?true:data.isDefault;
+        const shouldBeDefault = existingAccount.length===0? true : data.isDefault;
         
         //if this should be default acc
         if(shouldBeDefault){
