@@ -2,6 +2,7 @@
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { success } from "zod";
 
 const serializeTransaction = (obj) =>{
     const serialized = {...obj};
@@ -84,5 +85,67 @@ export async function getAccountWithTransaction(accountId){
       ...serializeTransaction(account),
       transactions : account.transactions.map(serializeTransaction),
     };
-  
-}
+  }
+
+
+export async function bulkDeleteTransaction(transactionIds){
+  try {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const user = await db.user.findUnique({
+      where: { clerkUserId: userId },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const transactions = await db.transaction.findMany({
+      where : {
+        id : { in : transactionIds },
+        userId : user.id,
+      }
+    })
+
+    const accountbalanceChanges = transactions.reduce((acc, transaction)=>{
+      const change = 
+        transaction.type === "EXPENSE"
+        ? transaction.amount
+        : -transaction.amount;
+      acc[transaction.accountId] = (acc[transaction.accountId] || 0) + change;
+      return acc;
+    }, {});
+
+    //delete transaction and update account balance
+    //using prisma trnasaction to ensure atomicity
+    await db.$transaction(async (tx)=>{
+      //delete trnctn id
+      await tx.transaction.deleteMany({
+        where : {
+          id : { in : transactionIds},
+          userId : user.id,
+        },
+      });
+      //update account balance
+      for (const [accountId, balanceChange] of Object.entries(
+        accountbalanceChanges
+      )){
+        await tx.account.update({
+          where : { id : accountId},
+          data : {
+            balance : {
+              increment : balanceChange,
+            },
+          },
+        });
+      }
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/account/[id]");
+    return {success : true};
+  } catch (error) {
+    return {success : false, error : error.message};
+  }
+} 
