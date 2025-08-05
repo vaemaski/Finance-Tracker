@@ -31,7 +31,7 @@ export async function getcurrentBudget(accountId){
         );
         const endOfMonth = new Date(
             currentDate.getFullYear(),
-            currentDate.getMonth() +1,
+            currentDate.getMonth() + 1,
             0
         );
 
@@ -49,12 +49,12 @@ export async function getcurrentBudget(accountId){
                 amount : true,
             },
         });
+        console.log(expenses);
+        
 
         return {
             budget : budget?{ ...budget, amount : budget.amount.toNumber()} : null,
-            currentExpenses : expenses._sum.amount
-            ? expenses._sum.amount.toNumber()
-            : 0,
+            currentExpenses : expenses._sum?.amount?.toNumber() || 0,
         };
     } catch (error) {
         console.error("Error fetching budget" , error);
